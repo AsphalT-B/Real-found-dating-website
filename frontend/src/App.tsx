@@ -10,6 +10,9 @@ function App() {
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const { data: session, isPending: isSessionLoading } =
+    authClient.useSession();
+   const profileVisible = showProfile || Boolean(session);
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setMessage("");
@@ -57,25 +60,50 @@ function App() {
     : isSignup
       ? "Create account"
       : "Sign in";
-      if (showProfile) {
+      async function handleSignOut() {
+        const { error } = await authClient.signOut();
+
+        if (error) {
+          setMessage(error.message || "Unable to sign out.");
+          return;
+        }
+
+        setShowProfile(false);
+        setMessage("");
+      }
+      if (isSessionLoading) {
         return (
-          <main className="min-h-screen bg-rose-50 px-6 py-12 text-slate-900">
-            <section className="mx-auto max-w-md rounded-3xl bg-white p-8 shadow-xl">
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-rose-500">
-                Found
-              </p>
-
-              <h1 className="mt-3 text-3xl font-bold">Complete your profile</h1>
-
-              <p className="mt-3 mb-8 text-slate-600">
-                Tell us a little about yourself.
-              </p>
-
-              <ProfileForm />
-            </section>
+          <main className="flex min-h-screen items-center justify-center bg-rose-50 text-slate-700">
+            Checking your session...
           </main>
         );
       }
+  if (profileVisible) {
+    return (
+      <main className="min-h-screen bg-rose-50 px-6 py-12 text-slate-900">
+        <section className="mx-auto max-w-md rounded-3xl bg-white p-8 shadow-xl">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-rose-500">
+            Found
+          </p>
+
+          <h1 className="mt-3 text-3xl font-bold">Complete your profile</h1>
+
+          <p className="mt-3 mb-8 text-slate-600">
+            Tell us a little about yourself.
+          </p>
+
+          <ProfileForm />
+          <button
+            type="button"
+            onClick={handleSignOut}
+            className="mt-5 w-full rounded-xl border border-slate-300 px-4 py-3 font-semibold text-slate-700 hover:bg-slate-100"
+          >
+            Sign out
+          </button>
+        </section>
+      </main>
+    );
+  }
   return (
     <main className="min-h-screen bg-rose-50 px-6 py-12 text-slate-900">
       <section className="mx-auto max-w-md rounded-3xl bg-white p-8 shadow-xl">
@@ -85,11 +113,6 @@ function App() {
         <h1 className="mt-3 text-3xl font-bold">
           {isSignup ? "Create your dating profile" : "Welcome back"}
         </h1>
-        <p className="mt-3 text-slate-600">
-          {isSignup
-            ? "Start with an account. We will build your profile next."
-            : "Sign in to continue to your profile."}
-        </p>
         <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
           {isSignup && (
             <label className="block">
